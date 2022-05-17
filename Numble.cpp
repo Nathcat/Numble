@@ -184,5 +184,9 @@ COLORREF DetermineColour(TCHAR number, int index) {
 }
 
 void GenerateRandomNumber() {
+	TCHAR characters[11] = TEXT("0123456789");
 
+	for (int i = 0; i < 4; i++) {
+		correctNumbers[i] = characters[rand() % 11];
+	}
 }
