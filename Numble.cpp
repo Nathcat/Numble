@@ -89,6 +89,8 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 			
 
 			PaintBoxStates(hWnd, &ps);
+			InvalidateRect(hWnd, &windowRect, TRUE);
+			UpdateWindow(hWnd);
 			currentRow++;
 		}
 
@@ -117,9 +119,6 @@ void PaintBoxStates(HWND hWnd, PAINTSTRUCT* pPs) {
 
 	SelectObject(hdc, original);
 	EndPaint(hWnd, pPs);
-
-	InvalidateRect(hWnd, &windowRect, TRUE);
-	UpdateWindow(hWnd);
 }
 
 int* GetRowValues(HWND hWnd, int row) {
