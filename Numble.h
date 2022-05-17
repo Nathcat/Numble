@@ -19,23 +19,15 @@ COLORREF** boxStates = new COLORREF * [] {
 	new COLORREF[]{ NORMAL_COLOUR, NORMAL_COLOUR, NORMAL_COLOUR, NORMAL_COLOUR },
 };
 
-HWND** boxes = new HWND * [] {
-	new HWND[]{ NULL, NULL, NULL, NULL },
-	new HWND[]{ NULL, NULL, NULL, NULL },
-	new HWND[]{ NULL, NULL, NULL, NULL },
-	new HWND[]{ NULL, NULL, NULL, NULL },
-	new HWND[]{ NULL, NULL, NULL, NULL },
-	new HWND[]{ NULL, NULL, NULL, NULL },
-};
+HWND boxes[24];
 
 int currentRow = 0;
 RECT windowRect;
-TCHAR correctNumbers[5] = _T("1234");
+TCHAR correctNumbers[5] = TEXT("1234");
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void PaintBoxStates(HWND hWnd, PAINTSTRUCT* ps);
-TCHAR* GetRowValues(HWND hWnd, int row);
+void GetRowValues(HWND hWnd, int row, TCHAR** pBuffers);
 COLORREF DetermineColour(TCHAR number, int index);
-void DebugLog(std::string message);
-std::string ttos(TCHAR* message, int numberOfChars);
+void GenerateRandomNumber();

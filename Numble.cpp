@@ -1,6 +1,9 @@
 #include "Numble.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	srand(time(NULL));
+	GenerateRandomNumber();
+	
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -33,6 +36,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	windowRect = { 0, 0, 170, 270 };
 
+	int boxCounter = 0;
+	for (int row = 0; row < 6; row++) {
+		for (int col = 0; col < 4; col++) {
+			boxes[boxCounter] = CreateWindowEx(0, TEXT("EDIT"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_BORDER, 20 + (30 * col), 20 + (30 * row), 20, 20, hWnd, NULL, hInstance, NULL);
+			boxCounter++;
+		}
+	}
+
+	CreateWindowEx(0, TEXT("button"), TEXT("Submit"), WS_VISIBLE | WS_CHILD, 25, 200, 100, 20, hWnd, (HMENU)1, hInstance, NULL);
+
+
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 
@@ -48,26 +62,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT ps;
-	HDC hdc;
-	HGDIOBJ original;
+	TCHAR** rowValues = new TCHAR * [4]{
+		new TCHAR[2],
+		new TCHAR[2],
+		new TCHAR[2],
+		new TCHAR[2],
+	};
 
 	switch (msg) {
-	case WM_CREATE:
-		// Create the text boxes here
-		hdc = BeginPaint(hWnd, &ps);
-
-		for (int row = 0; row < 6; row++) {
-			for (int col = 0; col < 4; col++) {
-				*((* (boxes + row)) + col) = CreateWindow(TEXT("Edit"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_BORDER, 20 + (30 * col), 20 + (30 * row), 20, 20, hWnd, NULL, NULL, NULL);
-			}
-		}
-
-		CreateWindow(TEXT("button"), TEXT("Submit"), WS_VISIBLE | WS_CHILD, 25, 200, 100, 20, hWnd, (HMENU) 1, NULL, NULL);
-
-		//SelectObject(hdc, original);
-		EndPaint(hWnd, &ps);
-		break;
-
 	case WM_PAINT:
 		PaintBoxStates(hWnd, &ps);
 		break;
@@ -78,25 +80,40 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == 1) {
-			if (currentRow == 6) {
-				PostQuitMessage(0);
-				break;
-			}
 
-			TCHAR* rowValues = GetRowValues(hWnd, currentRow);
-			/*
-			*(boxStates + currentRow) = new COLORREF[] {
-				DetermineColour(*rowValues, 0),
-				DetermineColour(*(rowValues + 1), 1),
-				DetermineColour(*(rowValues + 2), 2),
-				DetermineColour(*(rowValues + 3), 3),
-			};*/
+			GetRowValues(hWnd, currentRow, rowValues);
 			
+			*(boxStates + currentRow) = new COLORREF[] {
+				DetermineColour(**rowValues, 0),
+				DetermineColour(**(rowValues + 1), 1),
+				DetermineColour(**(rowValues + 2), 2),
+				DetermineColour(**(rowValues + 3), 3),
+			};
 
 			PaintBoxStates(hWnd, &ps);
 			InvalidateRect(hWnd, &windowRect, TRUE);
 			UpdateWindow(hWnd);
+
+			bool allCorrect = true;
+			for (int i = 0; i < 4; i++) {
+				if (*((*(boxStates + currentRow)) + i) != CORRECT_COLOUR) {
+					allCorrect = false;
+				}
+			}
+
+			if (allCorrect) {
+				MessageBox(hWnd, TEXT("Yay! You got the number right!"), TEXT("Congrats"), MB_OK);
+				PostQuitMessage(0);
+				break;
+			}
+
 			currentRow++;
+
+			if (currentRow == 6) {
+				MessageBox(hWnd, TEXT("Aww, not quite"), TEXT(":("), MB_OK);
+				PostQuitMessage(0);
+				break;
+			}
 		}
 
 		break;
@@ -106,6 +123,7 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		break;
 	}
 }
+
 
 void PaintBoxStates(HWND hWnd, PAINTSTRUCT* pPs) {
 	HDC hdc = BeginPaint(hWnd, pPs);
@@ -126,18 +144,16 @@ void PaintBoxStates(HWND hWnd, PAINTSTRUCT* pPs) {
 	EndPaint(hWnd, pPs);
 }
 
-TCHAR* GetRowValues(HWND hWnd, int row) {
-	HWND* rowBoxes = *(boxes + row);
-
-	TCHAR buffer[4];
-
+void GetRowValues(HWND hWnd, int row, TCHAR** pBuffers) {
+	HWND rowBoxes[4];
 	for (int i = 0; i < 4; i++) {
-		GetWindowText(*(rowBoxes + i), &buffer[i], 1);
+		rowBoxes[i] = boxes[(row * 4) + i];
 	}
 
-	DebugLog(ttos(buffer, 4) + "\n");
-
-	return buffer;
+	for (int i = 0; i < 4; i++) {
+		GetWindowText(rowBoxes[i], *(pBuffers + i), 2);
+		SetWindowText(rowBoxes[i], *(pBuffers + i));
+	}
 }
 
 bool ListContains(TCHAR number, TCHAR* list, int numberOfElements) {
@@ -167,21 +183,6 @@ COLORREF DetermineColour(TCHAR number, int index) {
 	}
 }
 
-void DebugLog(std::string message) {
-	std::ofstream file("DebugLog.txt");
+void GenerateRandomNumber() {
 
-	file << message;
-
-	file.flush();
-	file.close();
-}
-
-std::string ttos(TCHAR* message, int numberOfChars) {
-	std::string str = "";
-
-	for (int i = 0; i < numberOfChars; i++) {
-		str += *(message + i);
-	}
-
-	return str;
 }
