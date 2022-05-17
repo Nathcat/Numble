@@ -58,7 +58,7 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 		for (int row = 0; row < 6; row++) {
 			for (int col = 0; col < 4; col++) {
-				*((* (boxes + row)) + col) = GetDlgCtrlID(CreateWindow(TEXT("Edit"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_BORDER, 20 + (30 * col), 20 + (30 * row), 20, 20, hWnd, NULL, NULL, NULL));
+				*((* (boxes + row)) + col) = CreateWindow(TEXT("Edit"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_BORDER, 20 + (30 * col), 20 + (30 * row), 20, 20, hWnd, NULL, NULL, NULL);
 			}
 		}
 
@@ -83,9 +83,14 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 				break;
 			}
 
-			int* rowValues = GetRowValues(hWnd, currentRow);			
-			COLORREF newColours[4];
-			// TODO: Determine the colours for each box
+			TCHAR* rowValues = GetRowValues(hWnd, currentRow);
+			/*
+			*(boxStates + currentRow) = new COLORREF[] {
+				DetermineColour(*rowValues, 0),
+				DetermineColour(*(rowValues + 1), 1),
+				DetermineColour(*(rowValues + 2), 2),
+				DetermineColour(*(rowValues + 3), 3),
+			};*/
 			
 
 			PaintBoxStates(hWnd, &ps);
@@ -121,26 +126,62 @@ void PaintBoxStates(HWND hWnd, PAINTSTRUCT* pPs) {
 	EndPaint(hWnd, pPs);
 }
 
-int* GetRowValues(HWND hWnd, int row) {
-	int* rowBoxes = *(boxes + row);
+TCHAR* GetRowValues(HWND hWnd, int row) {
+	HWND* rowBoxes = *(boxes + row);
 
-	TCHAR* buffers[] = {
-		new TCHAR[32],
-		new TCHAR[32],
-		new TCHAR[32],
-		new TCHAR[32],
-	};
+	TCHAR buffer[4];
 
-	for (int i = 0; i < 3; i++) {
-		GetDlgItemText(hWnd, *(rowBoxes + i), *(buffers + i), 2);
+	for (int i = 0; i < 4; i++) {
+		GetWindowText(*(rowBoxes + i), &buffer[i], 1);
 	}
 
-	int result[] = {
-		_ttoi(*(buffers)),
-		_ttoi(*(buffers + 1)),
-		_ttoi(*(buffers + 2)),
-		_ttoi(*(buffers + 3)),
-	};
+	DebugLog(ttos(buffer, 4) + "\n");
 
-	return result;
+	return buffer;
+}
+
+bool ListContains(TCHAR number, TCHAR* list, int numberOfElements) {
+	for (int i = 0; i < numberOfElements; i++) {
+		if (number == *(list + i)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+COLORREF DetermineColour(TCHAR number, int index) {
+	COLORREF result = NULL;
+
+	if (number == correctNumbers[index]) {
+		result = CORRECT_COLOUR;  // Green
+		return result;
+	}
+	else if (ListContains(number, correctNumbers, 4)) {
+		result = INCORRECT_COLOUR;  // Yellow
+		return result;
+	}
+	else {
+		result = NOTINWORD_COLOUR;  // Black
+		return result;
+	}
+}
+
+void DebugLog(std::string message) {
+	std::ofstream file("DebugLog.txt");
+
+	file << message;
+
+	file.flush();
+	file.close();
+}
+
+std::string ttos(TCHAR* message, int numberOfChars) {
+	std::string str = "";
+
+	for (int i = 0; i < numberOfChars; i++) {
+		str += *(message + i);
+	}
+
+	return str;
 }

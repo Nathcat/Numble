@@ -19,20 +19,23 @@ COLORREF** boxStates = new COLORREF * [] {
 	new COLORREF[]{ NORMAL_COLOUR, NORMAL_COLOUR, NORMAL_COLOUR, NORMAL_COLOUR },
 };
 
-int** boxes = new int * [] {
-	new int[]{ NULL, NULL, NULL, NULL },
-	new int[]{ NULL, NULL, NULL, NULL },
-	new int[]{ NULL, NULL, NULL, NULL },
-	new int[]{ NULL, NULL, NULL, NULL },
-	new int[]{ NULL, NULL, NULL, NULL },
-	new int[]{ NULL, NULL, NULL, NULL },
+HWND** boxes = new HWND * [] {
+	new HWND[]{ NULL, NULL, NULL, NULL },
+	new HWND[]{ NULL, NULL, NULL, NULL },
+	new HWND[]{ NULL, NULL, NULL, NULL },
+	new HWND[]{ NULL, NULL, NULL, NULL },
+	new HWND[]{ NULL, NULL, NULL, NULL },
+	new HWND[]{ NULL, NULL, NULL, NULL },
 };
 
 int currentRow = 0;
 RECT windowRect;
-int correctNumbers[] = {1, 2, 3, 4};
+TCHAR correctNumbers[5] = _T("1234");
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void PaintBoxStates(HWND hWnd, PAINTSTRUCT* ps);
-int* GetRowValues(HWND hWnd, int row);
+TCHAR* GetRowValues(HWND hWnd, int row);
+COLORREF DetermineColour(TCHAR number, int index);
+void DebugLog(std::string message);
+std::string ttos(TCHAR* message, int numberOfChars);

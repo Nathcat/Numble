@@ -16,3 +16,4 @@
 #include <tchar.h>
 
 #include <string>
+#include <fstream>
