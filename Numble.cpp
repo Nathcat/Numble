@@ -39,7 +39,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	int boxCounter = 0;
 	for (int row = 0; row < 6; row++) {
 		for (int col = 0; col < 4; col++) {
-			boxes[boxCounter] = CreateWindowEx(0, TEXT("EDIT"), TEXT(""), WS_VISIBLE | WS_CHILD | WS_BORDER, 20 + (30 * col), 20 + (30 * row), 20, 20, hWnd, NULL, hInstance, NULL);
+			boxes[boxCounter] = CreateWindowEx(0, TEXT("EDIT"), TEXT(""), WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER, 20 + (30 * col), 20 + (30 * row), 20, 20, hWnd, NULL, hInstance, NULL);
 			boxCounter++;
 		}
 	}
@@ -52,8 +52,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (!IsDialogMessage(hWnd, &msg)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 
 	return (int)msg.wParam;
@@ -81,39 +83,53 @@ LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	case WM_COMMAND:
 		if (LOWORD(wParam) == 1) {
 
-			GetRowValues(hWnd, currentRow, rowValues);
-			
-			*(boxStates + currentRow) = new COLORREF[] {
+			int resultCode = GetRowValues(hWnd, currentRow, rowValues);
+
+			if (resultCode == 0) {
+				*(boxStates + currentRow) = new COLORREF[]{
 				DetermineColour(**rowValues, 0),
 				DetermineColour(**(rowValues + 1), 1),
 				DetermineColour(**(rowValues + 2), 2),
 				DetermineColour(**(rowValues + 3), 3),
-			};
+				};
 
-			PaintBoxStates(hWnd, &ps);
-			InvalidateRect(hWnd, &windowRect, TRUE);
-			UpdateWindow(hWnd);
+				PaintBoxStates(hWnd, &ps);
+				InvalidateRect(hWnd, &windowRect, TRUE);
+				UpdateWindow(hWnd);
 
-			bool allCorrect = true;
-			for (int i = 0; i < 4; i++) {
-				if (*((*(boxStates + currentRow)) + i) != CORRECT_COLOUR) {
-					allCorrect = false;
+				bool allCorrect = true;
+				for (int i = 0; i < 4; i++) {
+					if (*((*(boxStates + currentRow)) + i) != CORRECT_COLOUR) {
+						allCorrect = false;
+					}
+				}
+
+				if (allCorrect) {
+					MessageBox(hWnd, TEXT("Yay! You got the number right!"), TEXT("Congrats"), MB_OK);
+					PostQuitMessage(0);
+					break;
+				}
+
+				currentRow++;
+
+				if (currentRow == 6) {
+					TCHAR message[35] = TEXT("Aww, not quite the number was     ");
+					message[30] = correctNumbers[0];
+					message[31] = correctNumbers[1];
+					message[32] = correctNumbers[2];
+					message[33] = correctNumbers[3];
+					message[34] = NULL;
+
+					MessageBox(hWnd, message, TEXT(":("), MB_OK);
+					PostQuitMessage(0);
+					break;
 				}
 			}
-
-			if (allCorrect) {
-				MessageBox(hWnd, TEXT("Yay! You got the number right!"), TEXT("Congrats"), MB_OK);
-				PostQuitMessage(0);
+			else if (resultCode == 1) {
+				MessageBox(hWnd, TEXT("You can only enter numbers!"), TEXT("Whoops!"), MB_ICONEXCLAMATION | MB_OK);
 				break;
 			}
-
-			currentRow++;
-
-			if (currentRow == 6) {
-				MessageBox(hWnd, TEXT("Aww, not quite"), TEXT(":("), MB_OK);
-				PostQuitMessage(0);
-				break;
-			}
+		
 		}
 
 		break;
@@ -144,7 +160,7 @@ void PaintBoxStates(HWND hWnd, PAINTSTRUCT* pPs) {
 	EndPaint(hWnd, pPs);
 }
 
-void GetRowValues(HWND hWnd, int row, TCHAR** pBuffers) {
+int GetRowValues(HWND hWnd, int row, TCHAR** pBuffers) {
 	HWND rowBoxes[4];
 	for (int i = 0; i < 4; i++) {
 		rowBoxes[i] = boxes[(row * 4) + i];
@@ -152,8 +168,15 @@ void GetRowValues(HWND hWnd, int row, TCHAR** pBuffers) {
 
 	for (int i = 0; i < 4; i++) {
 		GetWindowText(rowBoxes[i], *(pBuffers + i), 2);
+		TCHAR numberList[11] = TEXT("0123456789");
+		if (!ListContains(**(pBuffers + i), numberList, 10)) {
+			return 1;
+		}
+
 		SetWindowText(rowBoxes[i], *(pBuffers + i));
 	}
+
+	return 0;
 }
 
 bool ListContains(TCHAR number, TCHAR* list, int numberOfElements) {
@@ -187,6 +210,13 @@ void GenerateRandomNumber() {
 	TCHAR characters[11] = TEXT("0123456789");
 
 	for (int i = 0; i < 4; i++) {
-		correctNumbers[i] = characters[rand() % 11];
+		TCHAR character[1] = { characters[rand() % 11] };
+		while (character[0] == NULL) {
+			character[0] = characters[rand() % 11];
+		}
+
+		correctNumbers[i] = character[0];
 	}
+
+	correctNumbers[4] = NULL;
 }

@@ -28,6 +28,7 @@ TCHAR correctNumbers[5] = TEXT("1234");
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void PaintBoxStates(HWND hWnd, PAINTSTRUCT* ps);
-void GetRowValues(HWND hWnd, int row, TCHAR** pBuffers);
+int GetRowValues(HWND hWnd, int row, TCHAR** pBuffers);
 COLORREF DetermineColour(TCHAR number, int index);
 void GenerateRandomNumber();
+bool ListContains(TCHAR number, TCHAR* list, int numberOfElements);
