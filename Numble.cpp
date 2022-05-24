@@ -211,7 +211,7 @@ void GenerateRandomNumber() {
 
 	for (int i = 0; i < 4; i++) {
 		TCHAR character[1] = { characters[rand() % 11] };
-		while (character[0] == NULL) {
+		while (character[0] == NULL || ListContains(character[0], correctNumbers, 4)) {
 			character[0] = characters[rand() % 11];
 		}
 
